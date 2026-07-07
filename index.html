@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Beta Board — Strength Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --basalt:#1c1a17;
+    --stone:#262320;
+    --stone-light:#332f29;
+    --chalk:#ede9e1;
+    --chalk-dim:#9c968c;
+    --chalk-faint:#6b665f;
+    --tape-a:#3fa793;
+    --tape-a-dim:#274a43;
+    --tape-b:#e0a83a;
+    --tape-b-dim:#4a3d1f;
+    --tape-c:#9585d1;
+    --tape-c-dim:#38304f;
+    --danger:#c1503b;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--basalt);
+    color:var(--chalk);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:0 0 60px 0;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:20px 16px 0;}
+
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--stone-light);
+    padding-bottom:14px;
+  }
+  header .title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:34px;
+    letter-spacing:1px;
+    line-height:1;
+  }
+  header .subtitle{
+    font-size:11px;
+    color:var(--chalk-dim);
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    margin-top:4px;
+  }
+  .date-input{
+    background:var(--stone);
+    border:1px solid var(--stone-light);
+    color:var(--chalk);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:7px 10px;
+    border-radius:8px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px 6px;
+    border-radius:8px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px;
+    letter-spacing:1px;
+    cursor:pointer;
+    border:1px solid var(--stone-light);
+    background:var(--stone);
+    color:var(--chalk-dim);
+    transition:all .15s ease;
+    user-select:none;
+  }
+  .tab .tape-dot{
+    display:inline-block;
+    width:8px;height:8px;
+    border-radius:50%;
+    margin-right:6px;
+    vertical-align:middle;
+  }
+  .tab[data-day="A"].active{background:var(--tape-a-dim); color:var(--tape-a); border-color:var(--tape-a);}
+  .tab[data-day="B"].active{background:var(--tape-b-dim); color:var(--tape-b); border-color:var(--tape-b);}
+  .tab[data-day="C"].active{background:var(--tape-c-dim); color:var(--tape-c); border-color:var(--tape-c);}
+
+  .day-label{
+    font-size:12px;
+    color:var(--chalk-dim);
+    margin-bottom:16px;
+    letter-spacing:.3px;
+  }
+  .day-label b{color:var(--chalk);}
+
+  .mode-toggle{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .mode-btn{
+    flex:1;
+    text-align:center;
+    padding:8px 6px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.3px;
+    cursor:pointer;
+    border:1px solid var(--stone-light);
+    background:var(--stone);
+    color:var(--chalk-faint);
+    transition:all .15s ease;
+    user-select:none;
+  }
+  .mode-btn.active[data-mode="climb"]{background:var(--stone-light); color:var(--chalk); border-color:var(--chalk-dim);}
+  .mode-btn.active[data-mode="rest"]{background:var(--danger); color:var(--chalk); border-color:var(--danger);}
+  .mode-note{
+    font-size:11px;
+    color:var(--chalk-faint);
+    margin:-8px 0 14px;
+    font-style:italic;
+  }
+
+  .warmup{
+    background:var(--stone);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    font-size:12.5px;
+    color:var(--chalk-dim);
+    margin-bottom:16px;
+    line-height:1.6;
+  }
+  .warmup b{color:var(--chalk); font-weight:600;}
+
+  .superset-legend{
+    font-size:11.5px;
+    color:var(--chalk-dim);
+    margin:-4px 0 16px;
+  }
+  .superset-legend b{color:var(--chalk);}
+
+  .superset-block{
+    border-left:4px solid var(--stone-light);
+    border-radius:var(--radius);
+    margin-bottom:12px;
+    padding:12px 14px 14px 12px;
+    background:var(--stone);
+  }
+  .superset-block.pair-1{border-left-color:var(--tape-a);}
+  .superset-block.pair-2{border-left-color:var(--tape-c);}
+
+  .group-tag{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-weight:600;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:var(--chalk-faint);
+  }
+  .group-tag .dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--stone-light);}
+  .pair-1 .group-tag{color:var(--tape-a);}
+  .pair-1 .group-tag .dot{background:var(--tape-a);}
+  .pair-2 .group-tag{color:var(--tape-c);}
+  .pair-2 .group-tag .dot{background:var(--tape-c);}
+
+  .superset-divider{
+    text-align:center;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--chalk-faint);
+    margin:4px 0 10px;
+  }
+
+  .solo-wrap{
+    border-left:4px solid var(--stone-light);
+    border-radius:var(--radius);
+    margin-bottom:12px;
+    padding:12px 14px 14px 12px;
+    background:var(--stone);
+  }
+
+  .ex-card{margin-bottom:0;}
+  .card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:2px;
+  }
+  .ex-name{font-weight:600; font-size:15px;}
+  .ex-target{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--chalk-dim);
+  }
+  .ex-cue{
+    font-size:12px;
+    color:var(--chalk-dim);
+    margin-bottom:10px;
+    font-style:italic;
+  }
+
+  .sets-table{width:100%; border-collapse:collapse;}
+  .sets-table th{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    color:var(--chalk-faint);
+    text-align:left;
+    font-weight:500;
+    padding-bottom:6px;
+  }
+  .sets-table td{padding:3px 6px 3px 0;}
+  .sets-table .set-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--chalk-faint);
+    width:20px;
+  }
+  .sets-table input{
+    width:100%;
+    background:var(--basalt);
+    border:1px solid var(--stone-light);
+    color:var(--chalk);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:6px 8px;
+    border-radius:6px;
+  }
+  .sets-table input::placeholder{color:var(--chalk-faint);}
+  .sets-table input:focus{outline:none; border-color:var(--chalk-dim);}
+
+  .last-hint{
+    font-size:10.5px;
+    color:var(--chalk-faint);
+    margin-top:6px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  .log-btn{
+    width:100%;
+    background:var(--chalk);
+    color:var(--basalt);
+    border:none;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px;
+    letter-spacing:1.5px;
+    padding:14px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .log-btn:active{opacity:.85;}
+
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--chalk);
+    color:var(--basalt);
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    opacity:0;
+    transition:all .25s ease;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .history-toggle{
+    text-align:center;
+    font-size:12px;
+    color:var(--chalk-dim);
+    text-decoration:underline;
+    cursor:pointer;
+    margin:18px 0 8px;
+  }
+  .history-panel{display:none;}
+  .history-panel.open{display:block;}
+  .hist-row{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:6px 0;
+    border-bottom:1px solid var(--stone-light);
+  }
+  .hist-row .hd{color:var(--chalk-faint);}
+  .hist-ex-title{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:16px;
+    letter-spacing:.5px;
+    margin:14px 0 2px;
+    color:var(--chalk-dim);
+  }
+
+  .footer-row{
+    display:flex;
+    justify-content:center;
+    margin-top:20px;
+  }
+  .reset-link{
+    font-size:11px;
+    color:var(--chalk-faint);
+    cursor:pointer;
+    text-decoration:underline;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="title">BETA BOARD</div>
+      <div class="subtitle">Strength Log · Bouldering Comp Prep</div>
+    </div>
+    <input type="date" id="dateInput" class="date-input" />
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="mode-toggle" id="modeToggle">
+    <div class="mode-btn" data-mode="climb">Climbing Today</div>
+    <div class="mode-btn" data-mode="rest">Rest Day</div>
+  </div>
+  <div class="mode-note" id="modeNote"></div>
+
+  <div class="day-label" id="dayLabel"></div>
+  <div class="warmup" id="warmup"></div>
+  <div class="superset-legend"><b>Colored blocks are supersets</b> — do one set of each back-to-back, then rest. Ungrouped moves get full rest between sets.</div>
+  <div id="exerciseList"></div>
+
+  <button class="log-btn" id="logBtn">LOG SESSION</button>
+
+  <div class="history-toggle" id="historyToggle">View history ▾</div>
+  <div class="history-panel" id="historyPanel"></div>
+
+  <div class="footer-row">
+    <span class="reset-link" id="resetLink">clear all saved data</span>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PLAN = {
+  A: {
+    label: "Press & Legs",
+    tapeClass: "A",
+    warmup: "Row erg 2 min easy · Band pull-aparts 2×15 · Scap push-ups 1×10 · Hip circles 1×10/side",
+    exercises: [
+      { id:"a1", name:"Smith Machine Bench Press", target:"3 × 8", cue:"Moderate load, RPE 7 — not to failure", sets:3, primary:true, restTarget:"3 × 5", restCue:"Rest day — add weight, push last set to RPE 8-9" },
+      { id:"a2", name:"Goblet Squat (DB/KB)", target:"3 × 10", cue:"Full depth, chest tall", sets:3, primary:true, restTarget:"3 × 6", restCue:"Rest day — heavier load, last set near failure" },
+      { id:"a3", name:"Cable/Band External Rotation", target:"3 × 12/side", cue:"Elbow pinned to side, slow tempo — shoulder prehab", sets:3 },
+      { id:"a4", name:"Bulgarian Split Squat (DB)", target:"2 × 8/side", cue:"Back foot elevated on bench", sets:2 },
+      { id:"a5", name:"Pallof Press (cable)", target:"2 × 10/side", cue:"Resist rotation, brace core", sets:2 }
+    ],
+    blocks: [
+      { type:"superset", pair:1, ids:["a1","a3"] },
+      { type:"solo", id:"a2" },
+      { type:"superset", pair:2, ids:["a4","a5"] }
+    ],
+    finisher: "Optional finisher: Farmer Carry (KB) 2 × 30m"
+  },
+  B: {
+    label: "Hinge & Pull-Balance",
+    tapeClass: "B",
+    warmup: "Row erg 2 min easy · Cat-cow 1×10 · Banded good mornings 1×10 · Glute bridges 1×10",
+    exercises: [
+      { id:"b1", name:"KB/DB Romanian Deadlift", target:"3 × 8", cue:"Moderate load, neutral spine, soft knees", sets:3, primary:true, restTarget:"3 × 5", restCue:"Rest day — heavier pull, spine neutral, last set RPE 8-9" },
+      { id:"b2", name:"Ring or DB Overhead Press", target:"3 × 8", cue:"Standing or seated, controlled", sets:3, primary:true, restTarget:"3 × 6", restCue:"Rest day — push last set closer to failure" },
+      { id:"b3", name:"Face Pull (cable, rope)", target:"3 × 15", cue:"Elbows high, squeeze rear delts/scaps", sets:3 },
+      { id:"b4", name:"Hip Thrust (barbell/Smith)", target:"3 × 10", cue:"Full lockout, pause at top", sets:3 },
+      { id:"b5", name:"Dead Bug", target:"2 × 10/side", cue:"Low back pressed flat throughout", sets:2 }
+    ],
+    blocks: [
+      { type:"superset", pair:1, ids:["b2","b3"] },
+      { type:"solo", id:"b4" },
+      { type:"superset", pair:2, ids:["b1","b5"] }
+    ],
+    finisher: "Optional finisher: Row erg intervals 5 × 20s hard / 40s easy"
+  },
+  C: {
+    label: "Full-Body Stability",
+    tapeClass: "C",
+    warmup: "Row erg 2 min easy · Arm circles 1×10 · World's greatest stretch 5/side",
+    exercises: [
+      { id:"c1", name:"DB Step-Up", target:"3 × 8/side", cue:"Drive through heel, control the descent", sets:3, primary:true, restTarget:"3 × 6/side", restCue:"Rest day — add load, tempo still controlled" },
+      { id:"c2", name:"Ring Push-Up or Dip", target:"3 × 8–10", cue:"Full range, shoulders packed down", sets:3, primary:true, restTarget:"3 × 10-12 or weighted", restCue:"Rest day — add a vest/plate if easy, push last set" },
+      { id:"c3", name:"Cuban Press or Ring Scap Pull", target:"2 × 10", cue:"Light load — rotator cuff & scap control focus", sets:2 },
+      { id:"c4", name:"Suitcase Carry (KB, unilateral)", target:"2 × 30–40m/side", cue:"Resist leaning — anti-lateral-flexion", sets:2 },
+      { id:"c5", name:"Side Plank (w/ reach-through)", target:"2 × 30–45s/side", cue:"Hips stacked, no sagging", sets:2 }
+    ],
+    blocks: [
+      { type:"superset", pair:1, ids:["c1","c4"] },
+      { type:"superset", pair:2, ids:["c2","c3"] },
+      { type:"solo", id:"c5" }
+    ],
+    finisher: "Optional finisher: KB swings 3 × 15 (only if back feels good that week)"
+  }
+};
+
+let currentDay = "A";
+let currentMode = "climb"; // "climb" = climbing later today, "rest" = no climbing, ok to push harder
+let state = { sessions: {} }; // sessions[dateStr] = { day: 'A', mode: 'climb'|'rest', entries: { exId: [{w,r}, ...] } }
+
+// ====== STORAGE CONFIG — fill these in before deploying ======
+// 1. Sign up free at https://jsonbin.io
+// 2. Copy your "Master Key" (or an "Access Key" scoped to one bin) from the dashboard
+// 3. Create a new bin with content: {"sessions":{}}  and copy its Bin ID from the URL
+// 4. Paste both values below, replacing the placeholder text
+const JSONBIN_API_KEY = $2a$10$YQemB0qs7cfvrav7aTlAgOg6gZUhwHadrS2ymuRTjUOeXklg8GkuS;
+const JSONBIN_BIN_ID  =6a4d2c1bda38895dfe3bc05c;
+// ================================================================
+
+const dateInput = document.getElementById('dateInput');
+const toastEl = document.getElementById('toast');
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+dateInput.value = todayStr();
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=> toastEl.classList.remove('show'), 2200);
+}
+
+function storageConfigured(){
+  return JSONBIN_API_KEY && JSONBIN_API_KEY.indexOf("PASTE_") !== 0
+      && JSONBIN_BIN_ID && JSONBIN_BIN_ID.indexOf("PASTE_") !== 0;
+}
+
+async function loadState(){
+  if(!storageConfigured()){
+    showConfigBanner();
+    state = { sessions: {} };
+    return;
+  }
+  try{
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+      headers: { "X-Master-Key": JSONBIN_API_KEY, "X-Bin-Meta": "false" }
+    });
+    if(!res.ok) throw new Error("fetch failed");
+    const data = await res.json();
+    state = (data && data.sessions) ? data : { sessions: {} };
+  }catch(e){
+    showToast("Couldn't load saved data — check connection/config");
+    state = { sessions: {} };
+  }
+}
+
+async function saveState(){
+  if(!storageConfigured()){
+    showConfigBanner();
+    return;
+  }
+  try{
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
+      body: JSON.stringify(state)
+    });
+    if(!res.ok) throw new Error("save failed");
+  }catch(e){
+    showToast("Save failed — check connection/config");
+  }
+}
+
+function showConfigBanner(){
+  const existing = document.getElementById('configBanner');
+  if(existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'configBanner';
+  banner.style.cssText = 'background:var(--danger);color:var(--chalk);padding:12px 14px;border-radius:10px;font-size:12.5px;margin-bottom:16px;line-height:1.5;';
+  banner.innerHTML = '<b>Storage not configured yet.</b> Open this file\'s source, find JSONBIN_API_KEY and JSONBIN_BIN_ID near the top of the &lt;script&gt;, and paste in your own jsonbin.io key + bin ID. Until then nothing you log here will be saved.';
+  document.querySelector('.wrap').insertBefore(banner, document.querySelector('header').nextSibling);
+}
+
+function getLastForExercise(exId, beforeDate){
+  // find most recent session (strictly before or equal to `beforeDate`) containing this exercise
+  const dates = Object.keys(state.sessions)
+    .filter(d => state.sessions[d].entries && state.sessions[d].entries[exId])
+    .sort()
+    .reverse();
+  for(const d of dates){
+    if(d <= beforeDate){
+      return { date:d, sets: state.sessions[d].entries[exId], mode: state.sessions[d].mode || 'climb' };
+    }
+  }
+  return null;
+}
+
+function renderTabs(){
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = '';
+  ['A','B','C'].forEach(dayKey=>{
+    const div = document.createElement('div');
+    div.className = 'tab' + (dayKey===currentDay ? ' active' : '');
+    div.dataset.day = dayKey;
+    div.innerHTML = `<span class="tape-dot" style="background:var(--tape-${dayKey.toLowerCase()})"></span>Day ${dayKey}`;
+    div.addEventListener('click', ()=>{ currentDay = dayKey; renderAll(); });
+    tabsEl.appendChild(div);
+  });
+}
+
+function renderModeToggle(){
+  document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mode === currentMode);
+  });
+  const note = document.getElementById('modeNote');
+  note.textContent = currentMode === 'rest'
+    ? "Rest day mode — main lifts can push to RPE 8-9 on the last set."
+    : "Climbing today — keep main lifts around RPE 7, nothing to failure.";
+}
+
+function renderDayInfo(){
+  const plan = PLAN[currentDay];
+  document.getElementById('dayLabel').innerHTML = `<b>Day ${currentDay}</b> — ${plan.label}`;
+  document.getElementById('warmup').innerHTML = `<b>Warm-up (not logged):</b> ${plan.warmup}<br><br><b>Finisher:</b> ${plan.finisher}`;
+}
+
+function buildExCard(ex, dateVal){
+  const last = getLastForExercise(ex.id, dateVal);
+  const card = document.createElement('div');
+  card.className = 'ex-card';
+  card.dataset.exid = ex.id;
+
+  const useRest = currentMode === 'rest' && ex.primary;
+  const displayTarget = useRest ? ex.restTarget : ex.target;
+  const displayCue = useRest ? ex.restCue : ex.cue;
+
+  let rows = '';
+  for(let i=1;i<=ex.sets;i++){
+    const lastSet = last && last.sets[i-1] ? last.sets[i-1] : null;
+    const wPlaceholder = lastSet ? lastSet.w : '—';
+    const rPlaceholder = lastSet ? lastSet.r : '—';
+    rows += `
+      <tr>
+        <td class="set-num">${i}</td>
+        <td><input type="number" step="0.5" inputmode="decimal" placeholder="${wPlaceholder}" data-role="weight" data-set="${i}"></td>
+        <td><input type="number" step="1" inputmode="numeric" placeholder="${rPlaceholder}" data-role="reps" data-set="${i}"></td>
+      </tr>`;
+  }
+
+  const lastModeTag = last ? (last.mode === 'rest' ? ' [rest day]' : '') : '';
+
+  card.innerHTML = `
+    <div class="card-head">
+      <div class="ex-name">${ex.name}${ex.primary ? ' <span style="color:var(--chalk-faint);font-weight:400;">★</span>' : ''}</div>
+      <div class="ex-target">${displayTarget}</div>
+    </div>
+    <div class="ex-cue">${displayCue}</div>
+    <table class="sets-table">
+      <thead><tr><th></th><th>Weight</th><th>Reps</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${last ? `<div class="last-hint">Last logged ${last.date}${lastModeTag}: ${last.sets.map(s=>`${s.w}×${s.r}`).join(', ')}</div>` : `<div class="last-hint">No history yet — placeholders are just dashes</div>`}
+  `;
+  return card;
+}
+
+function renderExercises(){
+  const plan = PLAN[currentDay];
+  const container = document.getElementById('exerciseList');
+  container.innerHTML = '';
+  const dateVal = dateInput.value;
+
+  function findEx(id){ return plan.exercises.find(e=>e.id===id); }
+
+  plan.blocks.forEach(block=>{
+    if(block.type === 'superset'){
+      const wrap = document.createElement('div');
+      wrap.className = `superset-block pair-${block.pair}`;
+      const tag = document.createElement('div');
+      tag.className = 'group-tag';
+      tag.innerHTML = `<span class="dot"></span> Superset ${block.pair} — alternate sets, then rest`;
+      wrap.appendChild(tag);
+      block.ids.forEach((exId, idx)=>{
+        wrap.appendChild(buildExCard(findEx(exId), dateVal));
+        if(idx < block.ids.length - 1){
+          const divider = document.createElement('div');
+          divider.className = 'superset-divider';
+          divider.textContent = 'then';
+          wrap.appendChild(divider);
+        }
+      });
+      container.appendChild(wrap);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'solo-wrap';
+      const tag = document.createElement('div');
+      tag.className = 'group-tag';
+      tag.innerHTML = `<span class="dot"></span> Standalone — full rest between sets`;
+      wrap.appendChild(tag);
+      wrap.appendChild(buildExCard(findEx(block.id), dateVal));
+      container.appendChild(wrap);
+    }
+  });
+}
+
+function renderAll(){
+  renderTabs();
+  renderModeToggle();
+  renderDayInfo();
+  renderExercises();
+}
+
+async function logSession(){
+  const dateVal = dateInput.value;
+  const plan = PLAN[currentDay];
+  const entries = {};
+  let anyData = false;
+
+  document.querySelectorAll('#exerciseList .ex-card').forEach(card=>{
+    const exId = card.dataset.exid;
+    const sets = [];
+    const weightInputs = card.querySelectorAll('input[data-role="weight"]');
+    const repInputs = card.querySelectorAll('input[data-role="reps"]');
+    for(let i=0;i<weightInputs.length;i++){
+      const w = weightInputs[i].value.trim();
+      const r = repInputs[i].value.trim();
+      if(w !== '' || r !== ''){
+        sets.push({ w: w || '—', r: r || '—' });
+        anyData = true;
+      }
+    }
+    if(sets.length > 0){
+      entries[exId] = sets;
+    }
+  });
+
+  if(!anyData){
+    showToast("Enter at least one weight or rep to log");
+    return;
+  }
+
+  state.sessions[dateVal] = { day: currentDay, mode: currentMode, entries };
+  await saveState();
+  showToast(`Session logged for ${dateVal}`);
+  renderExercises(); // refresh "last logged" hints
+  renderHistoryIfOpen();
+}
+
+function renderHistoryIfOpen(){
+  const panel = document.getElementById('historyPanel');
+  if(panel.classList.contains('open')){
+    renderHistory();
+  }
+}
+
+function renderHistory(){
+  const panel = document.getElementById('historyPanel');
+  const plan = PLAN[currentDay];
+  let html = '';
+  plan.exercises.forEach(ex=>{
+    const dates = Object.keys(state.sessions)
+      .filter(d => state.sessions[d].entries && state.sessions[d].entries[ex.id])
+      .sort().reverse().slice(0,5);
+    if(dates.length === 0) return;
+    html += `<div class="hist-ex-title">${ex.name}</div>`;
+    dates.forEach(d=>{
+      const sets = state.sessions[d].entries[ex.id];
+      const tag = state.sessions[d].mode === 'rest' ? ' (rest)' : '';
+      html += `<div class="hist-row"><span class="hd">${d}${tag}</span><span>${sets.map(s=>`${s.w}×${s.r}`).join(', ')}</span></div>`;
+    });
+  });
+  panel.innerHTML = html || `<div class="last-hint">No sessions logged yet for Day ${currentDay}.</div>`;
+}
+
+document.getElementById('logBtn').addEventListener('click', logSession);
+
+document.getElementById('historyToggle').addEventListener('click', ()=>{
+  const panel = document.getElementById('historyPanel');
+  const toggle = document.getElementById('historyToggle');
+  panel.classList.toggle('open');
+  toggle.textContent = panel.classList.contains('open') ? 'Hide history ▴' : 'View history ▾';
+  if(panel.classList.contains('open')) renderHistory();
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentMode = btn.dataset.mode;
+    renderModeToggle();
+    renderExercises();
+  });
+});
+
+dateInput.addEventListener('change', ()=>{
+  const existing = state.sessions[dateInput.value];
+  currentMode = existing && existing.mode ? existing.mode : 'climb';
+  renderModeToggle();
+  renderExercises();
+  renderHistoryIfOpen();
+});
+
+document.getElementById('resetLink').addEventListener('click', async ()=>{
+  if(confirm('This clears all saved workout history in your cloud storage (affects every device). Continue?')){
+    state = { sessions: {} };
+    await saveState();
+    renderAll();
+    renderHistoryIfOpen();
+    showToast('All data cleared');
+  }
+});
+
+(async function init(){
+  await loadState();
+  const existing = state.sessions[dateInput.value];
+  currentMode = existing && existing.mode ? existing.mode : 'climb';
+  renderAll();
+})();
+</script>
+</body>
+</html>
