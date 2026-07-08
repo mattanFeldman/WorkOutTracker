@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Mattan Feldman Workout Tracker</title>
+<title>Beta Board — Strength Log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -330,7 +330,7 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="title">OldSoulClimber-Tracker</div>
+      <div class="title">BETA BOARD</div>
       <div class="subtitle">Strength Log · Bouldering Comp Prep</div>
     </div>
     <input type="date" id="dateInput" class="date-input" />
@@ -350,6 +350,8 @@
   <div id="exerciseList"></div>
 
   <button class="log-btn" id="logBtn">LOG SESSION</button>
+
+  <div class="warmup" id="cooldown"></div>
 
   <div class="history-toggle" id="historyToggle">View history ▾</div>
   <div class="history-panel" id="historyPanel"></div>
@@ -378,7 +380,8 @@ const PLAN = {
       { type:"solo", id:"a2" },
       { type:"superset", pair:2, ids:["a4","a5"] }
     ],
-    finisher: "Optional finisher: Farmer Carry (KB) 2 × 30m"
+    finisher: "Optional finisher: Farmer Carry (KB) 2 × 30m",
+    cooldown: "Doorway Pec Stretch 30s×2/side · Standing Quad Stretch 30s×2/side · Kneeling Hip Flexor Stretch 30s×2/side · Cross-Body Shoulder Stretch 20s×2/side · Child's Pose 30-45s"
   },
   B: {
     label: "Hinge & Pull-Balance",
@@ -396,7 +399,8 @@ const PLAN = {
       { type:"solo", id:"b4" },
       { type:"superset", pair:2, ids:["b1","b5"] }
     ],
-    finisher: "Optional finisher: Row erg intervals 5 × 20s hard / 40s easy"
+    finisher: "Optional finisher: Row erg intervals 5 × 20s hard / 40s easy",
+    cooldown: "Standing Hamstring Stretch 30s×2/side · Figure-4 Glute Stretch 30s×2/side · Overhead Triceps/Lat Stretch 30s×2/side · Cross-Body Shoulder Stretch 20s×2/side · Cat-Cow or Child's Pose 30-45s"
   },
   C: {
     label: "Full-Body Stability",
@@ -414,7 +418,8 @@ const PLAN = {
       { type:"superset", pair:2, ids:["c2","c3"] },
       { type:"solo", id:"c5" }
     ],
-    finisher: "Optional finisher: KB swings 3 × 15 (only if back feels good that week)"
+    finisher: "Optional finisher: KB swings 3 × 15 (only if back feels good that week)",
+    cooldown: "Kneeling Hip Flexor Stretch 30s×2/side · Standing Quad Stretch 30s×2/side · Doorway Pec Stretch 30s×2/side · Standing Side-Bend Reach 20-30s×2/side · Child's Pose 30-45s"
   }
 };
 
@@ -538,6 +543,7 @@ function renderDayInfo(){
   const plan = PLAN[currentDay];
   document.getElementById('dayLabel').innerHTML = `<b>Day ${currentDay}</b> — ${plan.label}`;
   document.getElementById('warmup').innerHTML = `<b>Warm-up (not logged):</b> ${plan.warmup}<br><br><b>Finisher:</b> ${plan.finisher}`;
+  document.getElementById('cooldown').innerHTML = `<b>Post-Workout Stretch (5-8 min, not logged):</b> ${plan.cooldown}`;
 }
 
 function buildExCard(ex, dateVal){
